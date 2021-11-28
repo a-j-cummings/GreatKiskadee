@@ -25,8 +25,8 @@ preproc <- function(raw_data,
   }
   snp <- raw_data %>% 
     select(-id, -race)
+  n_ind <- nrow(snp) # the number of individuals represented in the data
   if (dist == 'bernoulli') {
-    n_ind <- nrow(snp) # the number of individuals represented in the data
     n_loc <- ncol(snp) # the number of genome locations represented in the data
     copies <- array(0, dim = c(n_ind, n_loc, 2))
     # a helper function for spreading the allele levels
@@ -55,9 +55,16 @@ preproc <- function(raw_data,
     id <- snp %>% 
       select(ind, copy)
     snp <- snp %>% 
-      select(-ind, -copy)
+      select(-ind, -copy) %>% 
+      mutate_all(factor)
+    snp <- snp %>% 
+      .[,apply(snp, 2, \(col) length(unique(col))) > 1]
   } else if (dist == 'multinomial') {
-    break ### Flag for future edits
+    snp <- snp %>% 
+      mutate_all(factor)
+    snp <- snp %>% 
+      .[,apply(snp, 2, \(col) length(unique(col))) > 1]
+    id <- tibble(ind = 1:n_ind)
   }
   ret <- list(preproc_data = snp, id = id)
 }
