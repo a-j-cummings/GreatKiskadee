@@ -2,6 +2,7 @@
 
 library(tidyverse)
 library(nimble)
+library(ggtern) # for Barycentric coordinate plots
 
 source('preproc.R')
 
@@ -80,6 +81,16 @@ model0 <- nimbleModel(code = model0_code, name = 'model0',
 
 mcmc0_out <- nimbleMCMC(code = model0_code, constants = model0_consts, 
                         data = model0_data, inits = model0_inits, 
-                        nchains = 1, niter = 10, summary = TRUE, 
+                        nchains = 3, niter = 1000, summary = TRUE, 
                         WAIC=TRUE, monitors = c('Q', 'P', 'Z'))
 
+which(stringr::str_detect(rownames(mcmc0_out$summary), 'Q')) -> Qs
+Qdraws <- mcmc0_out$summary[Qs,]
+Qdraws2 <- cbind(Qdraws[1:168,1], Qdraws[169:336,1], Qdraws[337:504,1])
+colnames(Qdraws2) <- c('x', 'y', 'z')
+Qdraws2 <- as_tibble(Qdraws2) %>% 
+  mutate(race = drop_na(haplo)$race)
+
+ggtern(Qdraws2, aes(x, y, z)) + 
+  geom_point(aes(color = race))
+ggsave('haplo_tern.png')
