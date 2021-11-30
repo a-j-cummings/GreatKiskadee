@@ -91,6 +91,8 @@ colnames(Qdraws2) <- c('x', 'y', 'z')
 Qdraws2 <- as_tibble(Qdraws2) %>% 
   mutate(race = drop_na(haplo)$race)
 
+save(mcmc0_out, file = 'mcmc0_out.Rdata')
+
 ggtern(Qdraws2, aes(x, y, z)) + 
   geom_point(aes(color = race))
 ggsave('haplo_tern.png')
