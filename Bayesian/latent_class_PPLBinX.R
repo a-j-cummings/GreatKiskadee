@@ -10,10 +10,10 @@ set.seed(1)
 haplo <- read_csv('../data/haplotype.csv') %>%
   drop_na()
 
-# 0. The model as found in CASI
-iters <- 100
-burn <- 10
-thin <- 2
+
+iters <- 123618
+burn <- 126
+thin <- 33
 # prepare data objects and constants
 I <- nrow(haplo)
 M <- ncol(haplo)-2
