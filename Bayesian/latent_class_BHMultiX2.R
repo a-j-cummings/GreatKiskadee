@@ -2,6 +2,8 @@ library(tidyverse)
 library(gtools) # for rdirichlet
 library(ggtern) # for Barycentric coordinate plots
 
+source('slice_sampling.R')
+
 set.seed(1)
 
 haplo <- read_csv('../data/haplotype.csv') %>% 
@@ -57,43 +59,67 @@ update_P <- function(lambda = c(1, 1, 1)){
 }
 
 update_Q <- function(){
-  Z_counts <- apply(Z, c(1, 3), sum)[1,]
-  Q <- apply(Z_counts, 1, \(row) rdirichlet(1, gamma + row))
+  Z_counts <- apply(Z, c(1, 3), sum)
+  Q <- t(apply(Z_counts, 1, \(counts_i) rdirichlet(1, alpha_q + counts_i)))
   return(Q)
 }
 
-update_alpha_q <- function(){
-  unnorm <- 
+update_alpha_q <- function(alpha = alpha_q, params = c(2,2)){
+  a <- params[1]
+  b <- params[2]
+  log_dens <- function(alpha_k, Q_k){# unnormalized
+    if (alpha_k <= 0) return(-Inf) 
+    log(gamma(sum(alpha))) - log(gamma(alpha_k)) + (a - 1)*alpha_k - 
+      b*alpha_k + sum(alpha*log(Q_k))
+  }
+  alpha[1] <- metropolis_update(alpha[1], \(x0) log_dens(x0, Q[,1]), w[1])
+  alpha[2] <- metropolis_update(alpha[2], \(x0) log_dens(x0, Q[,2]), w[2])
+  alpha[3] <- metropolis_update(alpha[3], \(x0) log_dens(x0, Q[,3]), w[3])
+  return(alpha)
 }
 
 # Initial values
 Q <- matrix(c(1/3, 1/3, 1/3), nrow = I, ncol = J, byrow = TRUE)
-alpha_q <- c(1,1,1)
+alpha_q <- alpha_q0 <- c(1,1,1)
 P <- array(1/2, dim = c(J, M, k_x))
 # init for Z not needed (will be sampled in first step)
 
 # run the sampler
+w <- c(2.5, 2.5, 2) # tuning parameters
 nchains <- 1
 nburn <- 0 
-nkeep <- 1e2
+nkeep <- 1e4
 niters <- nkeep + nburn
 draws_Z <- array(NA, dim = c(I, M, C, k_z, nchains, niters))
 draws_P <- array(NA, dim = c(J, M, k_x, nchains, niters))
 draws_Q <- array(NA, dim = c(I, J, nchains, niters))
+draws_alpha_q <- array(NA, dim = c(J, nchains, niters))
 for (chain in 1:nchains){
+  print(paste0('Running chain ', chain))
+  pb = txtProgressBar(min = 0, max = niters, initial = 0)
   for (iter in 1:niters){
     Z <- update_Z()
     P <- update_P()
     Q <- update_Q()
+    alpha_q <- update_alpha_q() # using slice sampling
     draws_Z[,,,,chain,iter] <- Z
     draws_P[,,,chain,iter] <- P
     draws_Q[,,chain,iter] <- Q
-
+    draws_alpha_q[,chain,iter] <- alpha_q
+    setTxtProgressBar(pb,iter)
   }
+  close(pb)
 }
 
-mcmc_out <- list(draws_Z=draws_Z, draws_P=draws_P, draws_Q=draws_Q)
-save(mcmc_out, file = '../mcmc_draws/mcmc_BHMultiX.Rdata')
+# acceptance rate of alpha_q
+for (chain in 1:nchains){
+  draws_chain_i <- rbind(alpha_q0, t(draws_alpha_q[,chain,]))
+  print(apply(lag(draws_chain_i) != draws_chain_i, 2, mean, na.rm = TRUE))
+}
+
+mcmc_out <- list(draws_Z=draws_Z, draws_P=draws_P, draws_Q=draws_Q, 
+                 draws_alpha_q=draws_alpha_q)
+save(mcmc_out, file = '../mcmc_draws/mcmc_BHMultiX2.Rdata')
 
 
 post_means <- apply(draws_Q[,,,(nburn+1):niters], c(1, 2), mean) %>%
@@ -103,4 +129,4 @@ post_means <- apply(draws_Q[,,,(nburn+1):niters], c(1, 2), mean) %>%
 
 ggtern(post_means, aes(x, y, z)) + 
   geom_point(aes(color = race))
-ggsave('../figs/haplo_tern_BHMultiX.png')
+ggsave('../figs/haplo_tern_BHMultiX2.png')
