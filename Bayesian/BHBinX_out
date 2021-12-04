@@ -31,3 +31,5 @@ dbl (100): Snp1, Snp2, Snp3, Snp4, Snp5, Snp6, Snp7, Snp8, Snp9, Snp10, Snp1...
 
 ℹ Use `spec()` to retrieve the full column specification for this data.
 ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+Error: object 'draws_Z' not found
+Execution halted

@@ -56,26 +56,26 @@ update_P <- function(lambda = c(1, 1, 1)){
   return(P)
 }
 
-update_Q <- function(gamma = c(1, 1, 1)){
-  Q <- array(NA, dim = c(I, k_z))
-  for (i in 1:I){
-   mi1 <- sum(Z[i,,1] == 1)
-   mi2 <- sum(Z[i,,2] == 1)
-   mi3 <- sum(Z[i,,3] == 1)
-   Q[i,] <- rdirichlet(1, gamma + c(mi1, mi2, mi3))
-  }
+update_Q <- function(){
+  Z_counts <- apply(Z, c(1, 3), sum)[1,]
+  Q <- apply(Z_counts, 1, \(row) rdirichlet(1, gamma + row))
   return(Q)
+}
+
+update_alpha_q <- function(){
+  unnorm <- 
 }
 
 # Initial values
 Q <- matrix(c(1/3, 1/3, 1/3), nrow = I, ncol = J, byrow = TRUE)
+alpha_q <- c(1,1,1)
 P <- array(1/2, dim = c(J, M, k_x))
 # init for Z not needed (will be sampled in first step)
 
 # run the sampler
 nchains <- 1
 nburn <- 0 
-nkeep <- 1e4
+nkeep <- 1e2
 niters <- nkeep + nburn
 draws_Z <- array(NA, dim = c(I, M, C, k_z, nchains, niters))
 draws_P <- array(NA, dim = c(J, M, k_x, nchains, niters))

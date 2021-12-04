@@ -7,11 +7,11 @@ library(ggtern) # for Barycentric coordinate plots
 set.seed(1)
 
 # read in the data
-haplo <- read_csv('haplotype.csv') %>%
+haplo <- read_csv('../data/haplotype.csv') %>%
   drop_na()
 
 # 0. The model as found in CASI
-iters <- 1e5
+iters <- 1e4
 # prepare data objects and constants
 I <- nrow(haplo)
 M <- ncol(haplo)-2
@@ -71,7 +71,7 @@ mcmc_out <- nimbleMCMC(code = model0_code, constants = model0_consts,
                         nchains = 1, niter = iters, summary = TRUE, 
                         WAIC=TRUE, monitors = c('Q', 'P', 'Z'))
 
-save(mcmc_out, file = 'mcmc_PPLMultiX.Rdata')
+save(mcmc_out, file = '../mcmc_draws/mcmc_PPLMultiX.Rdata')
 
 Qs <- which(stringr::str_detect(rownames(mcmc_out$summary), 'Q'))
 Qdraws <- mcmc_out$summary[Qs,]
@@ -83,5 +83,5 @@ Qdraws2 <- as_tibble(Qdraws2) %>%
 
 ggtern(Qdraws2, aes(x, y, z)) + 
   geom_point(aes(color = race))
-ggsave('haplo_tern_PPLMultiX.png')  
+ggsave('../figs/haplo_tern_PPLMultiX.png')  
 

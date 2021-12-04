@@ -89,9 +89,9 @@ P <- array(1/2, dim = c(J, M, k_x))
 # run the sampler
 nchains <- 1
 nburn <- 0
-nkeep <- 1e5
+nkeep <- 1e4
 niters <- nkeep + nburn
-draws_Z <- array(NA, dim = c(I, M, C, k_z, nchains, niters))
+draws_Z <- array(NA, dim = c(I, M, C, k_z, nchains, niters)) # latent, don't track
 draws_P <- array(NA, dim = c(J, M, k_x, nchains, niters))
 draws_Q <- array(NA, dim = c(I, J, nchains, niters))
 for (chain in 1:nchains){
