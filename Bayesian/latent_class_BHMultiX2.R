@@ -2,7 +2,7 @@ library(tidyverse)
 library(gtools) # for rdirichlet
 library(ggtern) # for Barycentric coordinate plots
 
-source('slice_sampling.R')
+source('metropolis_update.R')
 
 set.seed(1)
 
@@ -87,25 +87,34 @@ P <- array(1/2, dim = c(J, M, k_x))
 # run the sampler
 w <- c(2.5, 2.5, 2) # tuning parameters
 nchains <- 1
-nburn <- 0 
-nkeep <- 1e4
-niters <- nkeep + nburn
-draws_Z <- array(NA, dim = c(I, M, C, k_z, nchains, niters))
-draws_P <- array(NA, dim = c(J, M, k_x, nchains, niters))
-draws_Q <- array(NA, dim = c(I, J, nchains, niters))
-draws_alpha_q <- array(NA, dim = c(J, nchains, niters))
+nburn <- 72
+niters <- 86158
+nthin <- 23
+draws_Z <- array(NA, dim = c(I, M, C, k_z, nchains, niters/nthin))
+draws_P <- array(NA, dim = c(J, M, k_x, nchains, niters/nthin))
+draws_Q <- array(NA, dim = c(I, J, nchains, niters/nthin))
+draws_alpha_q <- array(NA, dim = c(J, nchains, niters/nthin))
 for (chain in 1:nchains){
   print(paste0('Running chain ', chain))
+  for (burn in 1:nburn){
+    Z <- update_Z()
+    P <- update_P()
+    Q <- update_Q()
+    alpha_q <- update_alpha_q()
+  }
   pb = txtProgressBar(min = 0, max = niters, initial = 0)
   for (iter in 1:niters){
     Z <- update_Z()
     P <- update_P()
     Q <- update_Q()
-    alpha_q <- update_alpha_q() # using slice sampling
-    draws_Z[,,,,chain,iter] <- Z
-    draws_P[,,,chain,iter] <- P
-    draws_Q[,,chain,iter] <- Q
-    draws_alpha_q[,chain,iter] <- alpha_q
+    alpha_q <- update_alpha_q()
+    if (iter %% nthin == 0){
+      loc <- iter/nthin
+      draws_Z[,,,,chain,loc] <- Z
+      draws_P[,,,chain,loc] <- P
+      draws_Q[,,chain,loc] <- Q 
+      draws_alpha_q[,chain,loc] <- alpha_q 
+    }
     setTxtProgressBar(pb,iter)
   }
   close(pb)
