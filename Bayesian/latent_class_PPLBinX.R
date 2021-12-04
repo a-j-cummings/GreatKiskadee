@@ -11,7 +11,9 @@ haplo <- read_csv('../data/haplotype.csv') %>%
   drop_na()
 
 # 0. The model as found in CASI
-iters <- 1e4
+iters <- 100
+burn <- 10
+thin <- 2
 # prepare data objects and constants
 I <- nrow(haplo)
 M <- ncol(haplo)-2
@@ -82,7 +84,8 @@ model0_inits <- list(Z1=Z10,
 
 mcmc_out <- nimbleMCMC(code = model0_code, constants = model0_consts, 
                         data = model0_data, inits = model0_inits, 
-                        nchains = 1, niter = iters, summary = TRUE, 
+                        nchains = 1, niter = iters + burn, nburnin = burn,
+                        thin = thin, summary = TRUE, 
                         WAIC=TRUE, monitors = c('Q', 'P', 'Z1', 'Z2'))
 
 save(mcmc_out, file = '../mcmc_draws/mcmc_PPLBinX.Rdata')
