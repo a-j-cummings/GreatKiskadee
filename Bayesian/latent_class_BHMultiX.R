@@ -107,7 +107,7 @@ mcmc_out <- list(draws_Z=draws_Z, draws_P=draws_P, draws_Q=draws_Q)
 save(mcmc_out, file = '../mcmc_draws/mcmc_BHMultiX.Rdata')
 
 
-post_means <- apply(draws_Q[,,,(nburn+1):niters], c(1, 2), mean) %>%
+post_means <- apply(draws_Q[,,,niters/nthin], c(1, 2), mean) %>%
   as_tibble() %>%
   rename(x = V1, y = V2, z = V3) %>%
   mutate(race = haplo$race)

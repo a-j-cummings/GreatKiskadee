@@ -1,0 +1,35 @@
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+✔ ggplot2 3.3.5     ✔ purrr   0.3.4
+✔ tibble  3.1.5     ✔ dplyr   1.0.7
+✔ tidyr   1.1.4     ✔ stringr 1.4.0
+✔ readr   2.0.2     ✔ forcats 0.5.1
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+Registered S3 methods overwritten by 'ggtern':
+  method           from   
+  grid.draw.ggplot ggplot2
+  plot.ggplot      ggplot2
+  print.ggplot     ggplot2
+--
+Remember to cite, run citation(package = 'ggtern') for further info.
+--
+
+Attaching package: ‘ggtern’
+
+The following objects are masked from ‘package:ggplot2’:
+
+    aes, annotate, ggplot, ggplot_build, ggplot_gtable, ggplotGrob,
+    ggsave, layer_data, theme_bw, theme_classic, theme_dark,
+    theme_gray, theme_light, theme_linedraw, theme_minimal, theme_void
+
+Rows: 197 Columns: 102
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr   (2): id, race
+dbl (100): Snp1, Snp2, Snp3, Snp4, Snp5, Snp6, Snp7, Snp8, Snp9, Snp10, Snp1...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+[1] "Running chain 1"
+=============
