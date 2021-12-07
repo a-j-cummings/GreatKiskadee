@@ -4,11 +4,25 @@ library(tidyverse)
 
 source('preproc.R')
 
-haplo <- read_csv('../data/haplotype.csv')
+haplo <- read_csv('../data/haplotype.csv') %>%
+  drop_na()
+
+variances <- haplo %>%
+  select(-id, -race, -Snp3, -Snp8, -Snp14) %>% # these SNP loci have no variance
+  as.matrix() %>%
+  apply(2, var) %>%
+  sort(decreasing = TRUE)
+snp <- variances %>%
+  names() %>%
+  str_extract('[:digit:]{1,3}') %>%
+  as.numeric()
+
+
 
 LatentClassEM <- function(raw_data, 
                           preproc,
-                          n_latent_classes,
+                          n_vars,
+                          n_latent_classes = 3,
                           rand_seed = 637,
                           tol = 1e-1){
   "Fits a Latent Class model via the EM algorithm.
@@ -33,15 +47,15 @@ LatentClassEM <- function(raw_data,
   require('ggtern')
   set.seed(rand_seed)
   
-  rand_choice <- c(10, 12, 18, 20, 25, 26, 35, 38, 39, 40, 56, 60, 65, 67, 86, 94, 97)
-  more_careful <- c(94, 67, # A and AA
-                    60, 25, # E and A
-                    58, 99, # J and A
-                    20, 86, # E and AA
-                    65, 40, # J and AA
-                    10, 56) # E and J 
+  #rand_choice <- c(10, 12, 18, 20, 25, 26, 35, 38, 39, 40, 56, 60, 65, 67, 86, 94, 97)
+  #more_careful <- c(94, 67, # A and AA
+  #                  60, 25, # E and A
+  #                  58, 99, # J and A
+  #                  20, 86, # E and AA
+  #                  65, 40, # J and AA
+  #                  10, 56) # E and J 
   preproc_out <- preproc(raw_data)
-  cols <- paste0('Snp', rand_choice) #more_careful)
+  cols <- paste0('Snp', snp[1:n_vars])
   preproc_data <- preproc_out$preproc_data[,cols]#1:20]#sample(1:97, 20)]
   id <- preproc_out$id
   manifest_variables <- colnames(preproc_data)
@@ -104,7 +118,7 @@ LatentClassEM <- function(raw_data,
                 by = manifest_variables) %>% 
       mutate(n_s = n*mu_s/mu)
     diff <- sqrt(sum((prev_mu_s - mu_s)^2))
-    print(paste('iteration', iter, ':', round(diff, 4)))
+    #print(paste('iteration', iter, ':', round(diff, 4)))
   }
   options(warn = 0)
   # get joint probability of manifest and latent variables
@@ -147,15 +161,19 @@ LatentClassEM <- function(raw_data,
     adorn_percentages('row', na.rm = TRUE, c('group1', 'group2', 'group3')) %>% 
     bind_cols(drop_na(haplo))
 
-  ret <- ggtern(data = cond_prob_latent, aes(x = group1, y=group2, z=group3)) +
-    geom_point(aes(color = race))
+  ret <- list(plot = ggtern(data = cond_prob_latent, 
+                            aes(x = group1, y=group2, z=group3)) +
+                            geom_point(aes(color = race)),
+              model = mod,
+              coords = cond_prob_latent,
+              n_iters = iter)
   return(ret)
 }
 
-init <- LatentClassEM(haplo, preproc, 3, tol = 1)
-step1 <- LatentClassEM(haplo, preproc, 3, tol = 0.15)
-step2 <- LatentClassEM(haplo, preproc, 3, tol = 1e-1)
-step3 <- LatentClassEM(haplo, preproc, 3, tol = 0.05)
-figs_list <- list(init = init, step1 = step1, step2 = step2, step3 = step3)
-save(figs_list, file = 'EM_figs_list.Rdata')
+#init <- LatentClassEM(haplo, preproc, 3, tol = 1)
+#step1 <- LatentClassEM(haplo, preproc, 3, tol = 0.15)
+#step2 <- LatentClassEM(haplo, preproc, 3, tol = 1e-1)
+#step3 <- LatentClassEM(haplo, preproc, 3, tol = 0.05)
+#figs_list <- list(init = init, step1 = step1, step2 = step2, step3 = step3)
+#save(figs_list, file = 'EM_figs_list.Rdata')
 
